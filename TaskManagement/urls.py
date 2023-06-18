@@ -13,7 +13,7 @@ urlpatterns = [
     path('sign-up/', sign_up_view, name='signup'),
     path('sign-in/', sign_in_view, name='signin'),
     path('logout/', logout_view, name='logout'),
-    path('/<uuid:uuid>/', task_view, name='task_detail'),
+    path('<uuid:uuid>/', task_view, name='task_detail'),
     path('<uuid:uuid>/update/', task_update, name='task_update'),
     path('<uuid:uuid>/delete/', task_delete, name='task_delete')
 
