@@ -1,11 +1,11 @@
 from django.shortcuts import render
 
 
-def index_view(request):
+def tasks_view(request):
     contex = {
         'title': 'Main'
     }
-    return render(request, 'index.html', contex)
+    return render(request, 'tasks_list.html', contex)
 
 
 def about_view(request):
