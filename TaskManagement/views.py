@@ -15,13 +15,6 @@ def about_view(request):
     return render(request, 'about.html', contex)
 
 
-def tasks_view(request):
-    contex = {
-        'title': 'Tasks'
-    }
-    return render(request, 'tasks_list.html', contex)
-
-
 def create_task_view(request):
     contex = {
         'title': 'Create task'
