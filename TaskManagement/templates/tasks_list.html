@@ -3,24 +3,23 @@
     {{ "title" }}
 {% endblock %}
 {% block content %}
-        <div class="container">
+    <div class="container">
         <h1>
             Welcome to task manager😎
-        </h1>
+        </h1><br>
         {% if tasks %}
             {% for t in tasks %}
                 <div class="alert alert-warning mt-2" style="position: relative;">
-                    <h3>{{ t.title }}</h3>
+                    <h3><a href="{% url 'TaskManagement:task_detail' t.uuid %}">{{ t.title }}</a></h3>
                     <p>{{ t.description }}</p>
-                    <p>Reporter - {{ t.reporter }}</p>
-                    <p>Assignee - {{ t.assignee }}</p>
                     <p>Created - {{ t.created_at }}</p>
-{#                    <form method="post" action="{% url 'TaskManagement:task_delete' t.id %}">#}
+                    <form method="post" action="{% url 'TaskManagement:task_delete' t.uuid %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-primary btn-sm" style="position: absolute; top: 10px; right: 10px;">
-                            Done
+                        <button type="submit" class="btn btn-primary btn-sm"
+                                style="position: absolute; top: 10px; right: 10px;">
+                            Complete
                         </button>
-{#                    </form>#}
+                    </form>
                 </div>
             {% endfor %}
         {% else %}
