@@ -3,5 +3,30 @@
     {{ "title" }}
 {% endblock %}
 {% block content %}
-    <h1>Page with tasks list😎</h1>
+        <div class="container">
+        <h1>
+            Welcome to task manager😎
+        </h1>
+        {% if tasks %}
+            {% for t in tasks %}
+                <div class="alert alert-warning mt-2" style="position: relative;">
+                    <h3>{{ t.title }}</h3>
+                    <p>{{ t.description }}</p>
+                    <p>Reporter - {{ t.reporter }}</p>
+                    <p>Assignee - {{ t.assignee }}</p>
+                    <p>Created - {{ t.created_at }}</p>
+{#                    <form method="post" action="{% url 'TaskManagement:task_delete' t.id %}">#}
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm" style="position: absolute; top: 10px; right: 10px;">
+                            Done
+                        </button>
+{#                    </form>#}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>
+                You don't have any tasks.
+            </p>
+        {% endif %}
+    </div>
 {% endblock %}
