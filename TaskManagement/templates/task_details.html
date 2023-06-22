@@ -3,5 +3,22 @@
     {{ "title" }}
 {% endblock %}
 {% block content %}
-    <h1>Task view😎</h1>
+    <div class="container">
+        <h1>Task Detail</h1><br>
+        <div class="alert alert-warning mt-2" style="position: relative;">
+            <h3>{{ task.title }}</h3>
+            <p>{{ task.description }}</p>
+            <p>Created - {{ task.created_at }}</p>
+            <p>Updated - {{ task.updated_at }}</p>
+            <p>Reporter - {{ task.reporter }}</p>
+            <p>Assignee - {{ task.assignee }}</p>
+            <p>Execution Status - {% if task.execution_status %}Completed{% else %}Pending{% endif %}</p>
+            <form method="post" action="{% url 'TaskManagement:task_delete' task.uuid %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-sm" style="position: absolute; top: 10px; right: 10px;">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
 {% endblock %}
