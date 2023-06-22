@@ -7,6 +7,7 @@ UserModel = get_user_model()
 
 
 class TasksModel(models.Model):
+
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=64)
     description = models.TextField(blank=True)
