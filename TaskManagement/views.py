@@ -1,9 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+
+from TaskManagement.forms import CreateTaskForm
+from TaskManagement.models import TasksModel
 
 
 def tasks_view(request):
+    tasks = TasksModel.objects.order_by('-created_at')
     contex = {
-        'title': 'Main'
+        'title': 'Main',
+        'tasks': tasks
     }
     return render(request, 'tasks_list.html', contex)
 
@@ -16,8 +21,17 @@ def about_view(request):
 
 
 def create_task_view(request):
+    if request.method == 'POST':
+        form = CreateTaskForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('TaskManagement:main_page')
+    else:
+        form = CreateTaskForm()
+
     contex = {
-        'title': 'Create task'
+        'title': 'Create task',
+        'form': form
     }
     return render(request, 'create_task.html', contex)
 
@@ -44,8 +58,10 @@ def logout_view(request):
 
 
 def task_view(request, uuid):
+    task = get_object_or_404(TasksModel, uuid=uuid)
     context = {
-        'title': 'TaskView'
+        'title': 'TaskView',
+        'task': task
     }
     return render(request, 'task_details.html', context)
 
