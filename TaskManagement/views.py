@@ -1,11 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from TaskManagement.forms import CreateTaskForm, RegisterUserForm, LoginUserForm
+
+from TaskManagement.forms import CreateTaskForm
 from TaskManagement.models import TasksModel
 
 
-@login_required(login_url='TaskManagement:signin')
 def tasks_view(request):
     tasks = TasksModel.objects.order_by('-created_at')
     contex = {
@@ -39,38 +39,15 @@ def create_task_view(request):
 
 
 def sign_up_view(request):
-    if request.method == 'POST':
-        form = RegisterUserForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('TaskManagement:signin')
-    else:
-        form = RegisterUserForm()
     contex = {
         'title': 'SignUp',
-        'form': form
     }
     return render(request, 'sign_up.html', contex)
 
 
 def sign_in_view(request):
-    if request.method == 'POST':
-        form = LoginUserForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(username=username, password=password)
-            if user is not None and user.check_password(password):
-                login(request, user)
-                return redirect('TaskManagement:main_page')
-            else:
-                form.add_error(None, 'Invalid username or password')
-    else:
-        form = LoginUserForm()
-
     contex = {
         'title': 'SignIn',
-        'form': form
     }
     return render(request, 'sign_in.html', contex)
 
