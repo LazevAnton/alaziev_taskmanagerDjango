@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinLengthValidator
 from django.db import models
 
+
 class TasksModel(models.Model):
     STATUS_CHOICES = [
         (False, 'Pending'),
@@ -27,10 +28,9 @@ class UserModel(AbstractUser):
     first_name = models.CharField(max_length=32, blank=True)
     last_name = models.CharField(max_length=32, blank=True)
     email = models.EmailField(max_length=64, unique=True)
-    password = models.CharField(max_length=20, validators=[MinLengthValidator(8)])
 
     class Meta:
-        db_table = "auth_user"
+        db_table = "User_custom_auth"
 
     def __str__(self):
         return self.get_full_name() or self.username
