@@ -1,7 +1,21 @@
 {% extends "base.html" %}
+
 {% block title %}
-    {{ "title" }}
+    {{ "TaskUpdate" }}
 {% endblock %}
+
 {% block content %}
-    <h1>Task update😎</h1>
+    <h1>Edit Task</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.title }}<br>
+        {{ form.description }}<br>
+        {{ form.reporter }}<br>
+        {{ form.assignee }}<br>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="id_execution_status" name="execution_status">
+            <label class="form-check-label" for="id_execution_status">Complete Task</label>
+        </div>
+        <button type="submit" class="btn btn-success">Update</button>
+    </form>
 {% endblock %}
