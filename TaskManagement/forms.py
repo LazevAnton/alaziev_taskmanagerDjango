@@ -12,11 +12,13 @@ class CreateTaskForm(forms.ModelForm):
         queryset=UserModel.objects.all(),
         widget=Select(attrs={'class': 'form-control'})
     )
-    execution_status = forms.ChoiceField(
-        choices=TasksModel.STATUS_CHOICES,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+
+    execution_status = forms.BooleanField(
         required=False,
-        label='Complete task'
+        label='Complete task',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
     )
 
     class Meta:
