@@ -109,7 +109,7 @@ class TaskUpdateView(UpdateView):
     def form_valid(self, form):
         task = form.instance
         if task.reporter == self.request.user or task.assignee == self.request.user:
-            if not task.execution_status:
+            if task.execution_status:
                 messages.error(self.request, f'This task already completed')
                 return self.form_invalid(form)
             else:
