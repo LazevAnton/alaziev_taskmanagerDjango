@@ -48,19 +48,24 @@ class UserRegisterForm(forms.ModelForm):
             'password': forms.PasswordInput,
             'confirm_password': forms.PasswordInput
         }
-    #
-    # def clean_password(self):
-    #     password = self.cleaned_data['password']
-    #     confirm_password = self.cleaned_data.get('confirm_password')
-    #     if password != confirm_password:
-    #         self.add_error('confirm_password', 'Passwords do not match')
-    #     return confirm_password
 
     def clean(self):
         password = self.cleaned_data.get('password')
         confirm_password = self.cleaned_data.get('confirm_password')
         if password != confirm_password:
-            self.add_error('confirm_password', 'Passwords do not match')
+            raise forms.ValidationError('Passwords do not match')
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if UserModel.objects.filter(username=username).exists():
+            raise forms.ValidationError(f'{username} already registered')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if UserModel.objects.filter(email=email).exists():
+            raise forms.ValidationError(f'Email {email} already registered')
+        return email
 
 
 class LoginUserForm(forms.ModelForm):
