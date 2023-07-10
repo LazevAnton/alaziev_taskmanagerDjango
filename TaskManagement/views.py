@@ -109,14 +109,15 @@ class TaskUpdateView(UpdateView):
     def form_valid(self, form):
         task = form.instance
         if task.reporter == self.request.user or task.assignee == self.request.user:
-            if task.execution_status:
-                messages.error(self.request, f'This task already completed')
+            if task.execution_status and not form.cleaned_data['execution_status']:
+                messages.error(self.request, f'This task is already completed')
                 return self.form_invalid(form)
             else:
+                if form.cleaned_data['execution_status']:
+                    task.execution_status = True
                 return super().form_valid(form)
         else:
-            messages.error(self.request, f'Only {task.reporter} or {task.assignee}'
-                                         f'can update this task')
+            messages.error(self.request, f'Only {task.reporter} or {task.assignee} can update this task')
             return self.form_invalid(form)
 
     def get_success_url(self):
