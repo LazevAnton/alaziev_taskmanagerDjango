@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.forms import TextInput, Textarea, Select, CheckboxInput
 from django import forms
 from TaskManagement.models import TasksModel, UserModel
@@ -7,17 +6,19 @@ from TaskManagement.models import TasksModel, UserModel
 class CreateTaskForm(forms.ModelForm):
     reporter = forms.ModelChoiceField(
         queryset=UserModel.objects.all(),
-        widget=Select(attrs={'class': 'form-control', 'placeholder': 'Select reporter'})
+        widget=Select(attrs={'class': 'form-control'})
     )
     assignee = forms.ModelChoiceField(
         queryset=UserModel.objects.all(),
-        widget=Select(attrs={'class': 'form-control', 'placeholder': 'Select assignee'})
+        widget=Select(attrs={'class': 'form-control'})
     )
-    execution_status = forms.ChoiceField(
-        choices=TasksModel.STATUS_CHOICES,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+
+    execution_status = forms.BooleanField(
         required=False,
-        label='Complete task'
+        label='Complete task',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
     )
 
     class Meta:
@@ -35,47 +36,47 @@ class CreateTaskForm(forms.ModelForm):
         }
 
 
-class UserRegisterForm(forms.Form):
-    username = forms.CharField(max_length=32)
-    first_name = forms.CharField(max_length=32, required=False)
-    last_name = forms.CharField(max_length=32, required=False)
-    email = forms.EmailField()
-    password = forms.CharField(widget=forms.PasswordInput)
-    confirm_password = forms.CharField(widget=forms.PasswordInput)
+class UserRegisterForm(forms.ModelForm):
+    confirm_password = forms.CharField()
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        try:
-            UserModel.objects.get(username=username)
-            raise ValidationError(f'{username}, already registered')
-        except UserModel.DoesNotExist:
-            return username
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        try:
-            UserModel.objects.get(email=email)
-            raise ValidationError(f'{email}, already registered')
-        except UserModel.DoesNotExist:
-            return email
+    class Meta:
+        model = UserModel
+        fields = [
+            'username', 'first_name',
+            'last_name', 'email',
+            'password'
+        ]
+        widgets = {
+            'password': forms.PasswordInput,
+            'confirm_password': forms.PasswordInput
+        }
 
     def clean(self):
         password = self.cleaned_data.get('password')
         confirm_password = self.cleaned_data.get('confirm_password')
-        if password and confirm_password and password != confirm_password:
-            self.add_error('confirm_password', 'Passwords dont match')
+        if password != confirm_password:
+            raise forms.ValidationError('Passwords do not match')
 
-    def save(self):
-        username = self.cleaned_data['username']
-        password = self.cleaned_data['password']
-        email = self.cleaned_data['email']
-        first_name = self.cleaned_data.get('first_name')
-        last_name = self.cleaned_data.get('last_name')
-        user = UserModel.objects.create_user(username=username, password=password, email=email,
-                                             first_name=first_name, last_name=last_name)
-        return user
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if UserModel.objects.filter(username=username).exists():
+            raise forms.ValidationError(f'{username} already registered')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if UserModel.objects.filter(email=email).exists():
+            raise forms.ValidationError(f'Email {email} already registered')
+        return email
 
 
-class LoginUserForm(forms.Form):
-    username = forms.CharField(max_length=32)
-    password = forms.CharField(widget=forms.PasswordInput)
+class LoginUserForm(forms.ModelForm):
+    class Meta:
+        model = UserModel
+        fields = [
+            'username',
+            'password'
+        ]
+        widgets = {
+            'password': forms.PasswordInput
+        }

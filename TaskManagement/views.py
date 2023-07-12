@@ -1,132 +1,148 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
-from django.views.decorators.http import require_http_methods
-
-from TaskManagement.forms import CreateTaskForm, UserRegisterForm, LoginUserForm
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.generic import ListView, TemplateView, CreateView, DetailView, DeleteView, UpdateView
+from TaskManagement.forms import CreateTaskForm, UserRegisterForm
 from TaskManagement.models import TasksModel
 
 
-def tasks_view(request):
-    tasks = TasksModel.objects.order_by('-created_at')
-    contex = {
-        'title': 'Main',
-        'tasks': tasks
-    }
-    return render(request, 'tasks_list.html', contex)
+@method_decorator(login_required(login_url='TaskManagement:signin'), name='dispatch')
+class TasksView(ListView):
+    template_name = 'tasks_list.html'
+    queryset = TasksModel.objects.order_by('-created_at')
+    context_object_name = 'tasks'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Tasks'
+        return context
 
 
-def about_view(request):
-    contex = {
-        'title': 'About'
-    }
-    return render(request, 'about.html', contex)
+class AboutPageView(TemplateView):
+    template_name = 'about.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'About'
+        return context
 
 
-@require_http_methods(["GET", "POST"])
-def create_task_view(request):
-    if request.method == 'POST':
-        form = CreateTaskForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('TaskManagement:main_page')
-    else:
-        form = CreateTaskForm()
+@method_decorator(login_required(login_url='TaskManagement:signin'), name='dispatch')
+class CreateTaskView(CreateView):
+    template_name = 'create_task.html'
+    model = TasksModel
+    form_class = CreateTaskForm
+    success_url = reverse_lazy('TaskManagement:main_page')
 
-    contex = {
-        'title': 'Create task',
-        'form': form
-    }
-    return render(request, 'create_task.html', contex)
+    def form_valid(self, form):
+        self.object = form.save()
+        return super().form_valid(form)
 
-
-@require_http_methods(["GET", "POST"])
-def sign_up_view(request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('TaskManagement:signin')
-    else:
-        form = UserRegisterForm()
-    contex = {
-        'title': 'SignUp',
-        'form': form
-    }
-    return render(request, 'sign_up.html', contex)
+    def get_context_data(self, **kwargs):
+        contex = super().get_context_data(**kwargs)
+        contex['title'] = 'CreateTask'
+        return contex
 
 
-@require_http_methods(["GET", "POST"])
-def sign_in_view(request):
-    if request.method == 'POST':
-        form = LoginUserForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('TaskManagement:tasks_list')
-            else:
-                form.add_error(None, 'Invalid username or password ')
-    else:
-        form = LoginUserForm()
-    contex = {
-        'title': 'SignIn',
-        'form': form
-    }
-    return render(request, 'sign_in.html', contex)
+class SignUpView(View):
+    form_class = UserRegisterForm
+    template_name = 'sign_up.html'
+    success_url = 'TaskManagement:signin'
 
-
-def logout_view(request):
-    logout(request)
-    contex = {
-        'title': 'LogOut'
-    }
-    return render(request, 'logout.html', contex)
-
-
-def task_view(request, uuid):
-    task = get_object_or_404(TasksModel, uuid=uuid)
-    context = {
-        'title': 'TaskView',
-        'task': task
-    }
-    return render(request, 'task_details.html', context)
-
-
-@require_http_methods(["GET", "POST"])
-def task_update(request, uuid):
-    task = get_object_or_404(TasksModel, uuid=uuid)
-    if request.method == 'POST':
-        if task.reporter == request.user or task.assignee == request.user:
-            if task.execution_status:
-                messages.error(request, 'This task is already completed')
-            else:
-                form = CreateTaskForm(request.POST, instance=task)
-                if form.is_valid():
-                    form.save()
-                    return redirect('TaskManagement:task_detail', uuid=uuid)
-        else:
-            messages.error(request, f'Only author {task.reporter} or {task.assignee} can update task')
-    else:
-        form = CreateTaskForm(instance=task)
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
         context = {
-            'title': 'TaskUpdate',
+            'title': 'Registration',
             'form': form
         }
-        return render(request, 'task_update.html', context)
-    return redirect('TaskManagement:task_detail', uuid=uuid)
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            return redirect(self.success_url)
+        context = {
+            'title': 'Registration',
+            'form': form
+        }
+        return render(request, self.template_name, context)
 
 
-def task_delete(request, uuid):
-    task = get_object_or_404(TasksModel, uuid=uuid)
-    if task.reporter != request.user:
-        messages.error(request, f'Only author {task.reporter} can delete this task')
-    elif task.execution_status:
-        messages.error(request, f'You cannot delete a task with a "Complete" status')
-    else:
-        task.delete()
-        return redirect('TaskManagement:tasks_list')
-    return redirect('TaskManagement:task_detail', uuid=uuid)
+class TaskView(DetailView):
+    template_name = 'task_details.html'
+    model = TasksModel
+
+    def get(self, request, uuid, *args, **kwargs):
+        task = get_object_or_404(self.model, uuid=uuid)
+        context = {
+            'title': 'TaskView',
+            'task': task
+        }
+        return render(request, self.template_name, context)
+
+
+class LoginUserView(LoginView):
+    template_name = 'sign_in.html'
+    next_page = 'TaskManagement:tasks_list'
+
+
+class LogOutUserView(LogoutView):
+    next_page = 'TaskManagement:signin'
+
+
+class TaskUpdateView(UpdateView):
+    template_name = 'task_update.html'
+    model = TasksModel
+    form_class = CreateTaskForm
+
+    def get_object(self, queryset=None):
+        uuid = self.kwargs.get('uuid')
+        return get_object_or_404(self.model, uuid=uuid)
+
+    def form_valid(self, form):
+        task = form.instance
+        if task.reporter == self.request.user or task.assignee == self.request.user:
+            if task.execution_status and not form.cleaned_data['execution_status']:
+                messages.error(self.request, f'This task is already completed')
+                return self.form_invalid(form)
+            else:
+                if form.cleaned_data['execution_status']:
+                    task.execution_status = True
+                return super().form_valid(form)
+        else:
+            messages.error(self.request, f'Only {task.reporter} or {task.assignee} can update this task')
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        uuid = self.kwargs.get('uuid')
+        return reverse_lazy('TaskManagement:task_detail', kwargs={'uuid': uuid})
+
+
+class TaskDeleteView(DeleteView):
+    model = TasksModel
+    template_name = 'task_delete.html'
+    success_url = reverse_lazy('TaskManagement:main_page')
+
+    def get_object(self, queryset=None):
+        uuid = self.kwargs.get('uuid')
+        return get_object_or_404(self.model, uuid=uuid)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.object.reporter != request.user:
+            messages.error(request, f'Only {self.object.reporter} or {self.object.assignee} can delete this task')
+            return redirect('TaskManagement:task_detail', uuid=self.object.uuid)
+        elif self.object.execution_status:
+            messages.error(request, 'You cannot delete a task with a "Completed" status')
+            return redirect('TaskManagement:task_detail', uuid=self.object.uuid)
+        else:
+            self.object.delete()
+            messages.success(request, 'Task deleted successfully')
+            return redirect(self.success_url)
