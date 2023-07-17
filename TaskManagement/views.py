@@ -35,6 +35,7 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
     template_name = 'create_task.html'
     model = TasksModel
     form_class = CreateTaskForm
+    success_url = reverse_lazy('TaskManagement:main_page')
     login_url = '/sign-in/'
     redirect_field_name = 'TaskManagement:tasks_list'
 
