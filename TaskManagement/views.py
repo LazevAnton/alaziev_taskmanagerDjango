@@ -14,6 +14,7 @@ class TasksView(LoginRequiredMixin, ListView):
     queryset = TasksModel.objects.order_by('-created_at')
     context_object_name = 'tasks'
     login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -34,8 +35,8 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
     template_name = 'create_task.html'
     model = TasksModel
     form_class = CreateTaskForm
-    success_url = reverse_lazy('TaskManagement:main_page')
     login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def form_valid(self, form):
         self.object = form.save()
@@ -78,6 +79,7 @@ class TaskView(LoginRequiredMixin, DetailView):
     template_name = 'task_details.html'
     model = TasksModel
     login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get(self, request, uuid, *args, **kwargs):
         task = get_object_or_404(self.model, uuid=uuid)
@@ -102,6 +104,7 @@ class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = TasksModel
     form_class = CreateTaskForm
     login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get_object(self, queryset=None):
         uuid = self.kwargs.get('uuid')
@@ -131,6 +134,7 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'task_delete.html'
     success_url = reverse_lazy('TaskManagement:main_page')
     login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get_object(self, queryset=None):
         uuid = self.kwargs.get('uuid')
