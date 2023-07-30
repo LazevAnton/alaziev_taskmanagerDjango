@@ -1,20 +1,20 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import ListView, TemplateView, CreateView, DetailView, DeleteView, UpdateView
 from TaskManagement.forms import CreateTaskForm, UserRegisterForm
 from TaskManagement.models import TasksModel
 
 
-@method_decorator(login_required(login_url='TaskManagement:signin'), name='dispatch')
-class TasksView(ListView):
+class TasksView(LoginRequiredMixin, ListView):
     template_name = 'tasks_list.html'
     queryset = TasksModel.objects.order_by('-created_at')
     context_object_name = 'tasks'
+    login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -31,12 +31,13 @@ class AboutPageView(TemplateView):
         return context
 
 
-@method_decorator(login_required(login_url='TaskManagement:signin'), name='dispatch')
-class CreateTaskView(CreateView):
+class CreateTaskView(LoginRequiredMixin, CreateView):
     template_name = 'create_task.html'
     model = TasksModel
     form_class = CreateTaskForm
     success_url = reverse_lazy('TaskManagement:main_page')
+    login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def form_valid(self, form):
         self.object = form.save()
@@ -75,9 +76,11 @@ class SignUpView(View):
         return render(request, self.template_name, context)
 
 
-class TaskView(DetailView):
+class TaskView(LoginRequiredMixin, DetailView):
     template_name = 'task_details.html'
     model = TasksModel
+    login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get(self, request, uuid, *args, **kwargs):
         task = get_object_or_404(self.model, uuid=uuid)
@@ -97,10 +100,12 @@ class LogOutUserView(LogoutView):
     next_page = 'TaskManagement:signin'
 
 
-class TaskUpdateView(UpdateView):
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'task_update.html'
     model = TasksModel
     form_class = CreateTaskForm
+    login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get_object(self, queryset=None):
         uuid = self.kwargs.get('uuid')
@@ -125,10 +130,12 @@ class TaskUpdateView(UpdateView):
         return reverse_lazy('TaskManagement:task_detail', kwargs={'uuid': uuid})
 
 
-class TaskDeleteView(DeleteView):
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
     model = TasksModel
     template_name = 'task_delete.html'
     success_url = reverse_lazy('TaskManagement:main_page')
+    login_url = '/sign-in/'
+    redirect_field_name = 'TaskManagement:tasks_list'
 
     def get_object(self, queryset=None):
         uuid = self.kwargs.get('uuid')
